@@ -1,46 +1,55 @@
 import streamlit as st
+import matplotlib.pyplot as plt
 import joblib
 import pandas as pd
 import json
 
-st.title("Classipet")
-st.write("Clasificador de mascotas. Introduzca los datos de su mascota y le diremos a que clase pertenece.")
-st.image("img/mascotas.png", use_container_width=True)
+st.title("Empleatronix")
+st.write("Todos los datos sobre los empleados en una aplicación.")
 
-# Carga el modelo entrando y las asignaciones para el color de ojos y el largo del pelo
-model = joblib.load("model/pets_model.joblib")
-with open("model/category_mapping.json", "r") as f:
-    category_mapping = json.load(f)
+empleados = pd.read_csv('datasets/employees.csv')
 
-# Extrae los valores categóricos
-eye_color_values = category_mapping["eye_color"]
-fur_length_values = category_mapping["fur_length"]
+# Mostramos los datos del dataframe
+st.dataframe(empleados)
 
-# Pide los datos de la mascota
-weight = st.number_input("Peso (kg)", min_value=0.0, max_value=100.0, value=0.0)
-height = st.number_input("Altura (cm)", min_value=0.0, max_value=100.0, value=0.0)
-eye_color = st.selectbox("Color de ojos", ["Azul", "Marrón", "Gris", "Verde"])
-fur_length = st.selectbox("Largo de pelo", ["Largo", "Medio", "Corto"])
+# Creamos 3 botones, 1 para seleccionar color y otros dos que al estar marcados muestren datos de una grafica, nombre y sueldos
 
-# Mapea la selección de color de ojos y largo del pelo al español
-eye_color_map = {"Marrón": "brown", "Azul": "blue", "Gris": "grey", "Verde": "green"}
-fur_length_map = {"Largo": "long", "Medio": "medium", "Corto": "short"}
+color, name_toggle, salary_toggle = st.columns(3)
 
-selected_eye_color = eye_color_map[eye_color]
-selected_fur_length = fur_length_map[fur_length]
+with color:
+    color = st.color_picker("Elige un color para las barras", "#00f900")
 
-# Genera las columnas binarias para eye_color y fur_length
-# eye_color_binary =  [int(color == selected_eye_color) for color in eye_color_values]
-eye_color_binary =  [(color == selected_eye_color) for color in eye_color_values]
-fur_length_binary =  [(length == selected_fur_length) for length in fur_length_values]
+with name_toggle:
+    name_toggle = st.toggle("Mostrar el nombre", value=True)
 
-# Crea un DataFrame con los datos de la mascota
-input_data = [weight,height] + eye_color_binary + fur_length_binary
-columns = ["weight_kg", "height_cm"] + [f"eye_color_{color}" for color in eye_color_values] + [f"fur_length_{length}" for length in fur_length_values]
-input_df = pd.DataFrame([input_data], columns=columns)
+with salary_toggle:
+    salary_toggle = st.toggle("Mostrar sueldo en la barra")
 
-#Realiza la predicción
-if st.button("Clasifica la mascota"):
-    prediction = model.predict(input_df)[0]
-    prediction_map = {"dog": "Perro", "cat": "Gato", "rabbit": "Conejo"}
-    st.success(f'La mascota es un {prediction_map[prediction]}', icon="✅")
+# Creamos una grafica de barras con matplotlib
+
+fig, ax = plt.subplots()
+
+# Cambiar a un gráfico de barras horizontal
+bars = ax.barh(empleados['full name'], empleados['salary'], color=color)
+
+# Modificar etiquetas en función de las opciones
+if not name_toggle:
+    ax.set_yticklabels([''] * len(empleados['full name']))  # Ocultar nombres en el eje Y
+
+if salary_toggle:
+    # Añadir etiquetas de salario al final de cada barra
+    for bar, salary in zip(bars, empleados['salary']):
+        ax.text(bar.get_width() + 50, bar.get_y() + bar.get_height() / 2,
+                f'{salary} €', va='center')
+
+# Configurar etiquetas de los ejes
+ax.set_xlabel('')
+ax.set_ylabel('')
+
+# Configurar el rango del eje X
+ax.set_xlim(0, 4500)  # Asegurarse de que el eje X llega hasta 4500
+
+# Mostrar el gráfico en Streamlit
+st.pyplot(fig)
+
+st.write("© Darío Nievas López")
