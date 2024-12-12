@@ -1,3 +1,3 @@
-# Clasificador de mascotas
+# Empleatronix
 
-Aplicación hecha en Streamlit que carga un modelo previamente entrenado y clasifica las mascotas en función del peso, la altura, el color de ojos y el largo del pelo.
+Aplicación hecha en Streamlit que carga un Dataset y crea unas gráficas utilizando la libreria Matplotlib
